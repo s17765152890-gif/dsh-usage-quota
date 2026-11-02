@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Usage & Reasoning",
+    "description": "Shows the active provider's quota under the composer and a Codex-style reasoning-effort control beside the model picker."
+  }
+}

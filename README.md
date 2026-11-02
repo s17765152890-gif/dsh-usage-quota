@@ -36,7 +36,17 @@ DeepSeek Harness（DSH）插件：把 **思考强度（推理等级）** 和 **�
 plugin_manager action=install_bundle target=<本仓库的绝对路径或已发布的包名>
 ```
 
-插件会在当前 profile 里插入一行 `usage-quota`。
+插件会在当前 profile 里插入一行 `usage-quota`。这是一个标准 DSH bundle：`package.json` 声明 `dsh.bundle.patch` 与 `dsh.client`，并导出 `locale/*.json`（`meta.title` / `meta.description`）与原创 `icon.svg`，所以在「插件」页里显示为 **用量与思考强度** 和对应图标，而不是一条裸路径行。
+
+### 标准插件形态清单
+
+| 项 | 位置 |
+|---|---|
+| bundle 补丁 | `package.json` → `dsh.bundle.patch` → `cordis.patch.yml` |
+| Host 入口 | `exports["."]` → `lib/index.js`（`apply` + `inject`） |
+| Client 入口 | `package.json` → `dsh.client`（`platform: web`）+ `exports["./client"]` → `lib/client.js` |
+| 展示标题/描述 | `locale/en.json`、`locale/zh.json` 的 `meta.title` / `meta.description` |
+| 图标 | `icon.svg`（原创，MIT 同许可）→ `exports["./icon"]` |
 
 ### 方式 B：手动加入 profile 的 `cordis.patch.yml`
 
