@@ -1,5 +1,7 @@
 # dsh-usage-quota
 
+![额度弹窗：OpenCode Go 的 5 小时 / 周 / 月剩余额度，壁纸背景下的玻璃材质](assets/hero.png)
+
 DeepSeek Harness（DSH）插件：把 **思考强度（推理等级）** 和 **当前供应商的额度查询** 放到输入框附近。
 
 无需修改 DSH 自带插件：两个控件都以新增条目的方式注册进 Web UI 的既有插槽。
