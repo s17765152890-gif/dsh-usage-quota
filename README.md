@@ -10,6 +10,8 @@ DeepSeek Harness（DSH）插件：把 **思考强度（推理等级）** 和 **�
 
 ### 1. 思考强度（Codex 风格）
 
+![思考强度卡片：Extra High 档位、分档滑条与「关闭思考」按钮](assets/reasoning-effort.png)
+
 模型选择器右侧新增一个小胶囊，直接显示当前推理等级。点开后是一张紧凑卡片：
 
 - 大字显示当前档位（Low / Medium / High / Extra High / Ultra）。
