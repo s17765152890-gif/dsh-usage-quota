@@ -1,0 +1,18 @@
+# Bundle patch: mount this plugin as one Host row.
+#
+# The row name is this package's own name, so it resolves from the profile's
+# installed packages. Configure per-project settings under `config`, for example:
+#
+#   - id: usage-quota
+#     name: dsh-usage-quota
+#     config:
+#       refreshSeconds: 60
+#       providers:
+#         my-relay:
+#           kind: balance
+#           label: My Relay
+#           endpoint: https://relay.example.com/v1/usage
+#           apiKeyRef: MY_RELAY_API_KEY
+- insert:
+    - id: usage-quota
+      name: dsh-usage-quota

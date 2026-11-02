@@ -1,0 +1,2 @@
+# Normalize line endings for every text file in the repository.
+* text=auto eol=lf

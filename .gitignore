@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Local DSH runtime state and any captured preferences
+dsh-usage-quota.json
+settings.json
+*.tmp
+
+# Secrets must never be committed
+.env
+.env.*
+*.key
+*.pem
+credentials*
+
+# Logs and editor noise
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Test output
+coverage/
