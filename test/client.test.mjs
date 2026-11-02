@@ -60,6 +60,15 @@ test('foreign or unknown providers never render a card', () => {
   assert.equal(client.__test.shouldRender({ ok: false, reason: 'no-key' }), true, 'a supported provider still shows its error state')
 })
 
+test('the quota dialog rides the shared menu material so it blurs like the rest of the UI', () => {
+  const source = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8')
+  assert.match(source, /h\(MenuSurface, \{ className: 'dsh-usage-dialog'/)
+  assert.match(source, /--dsw-menu-backdrop-filter:blur\(var\(--we-blur/)
+  assert.match(source, /--dsw-menu-surface-fill:var\(--we-tool-glass-fill/)
+  assert.match(source, /backdrop-filter:blur\(var\(--we-blur,18px\)\)/)
+  assert.doesNotMatch(source, /background:var\(--dsw-alias-bg-base/, 'the dialog must not paint an opaque theme background over the glass')
+})
+
 test('reset copy degrades gracefully around the boundary', () => {
   const { client } = loadBundle()
   assert.equal(client.__test.resetsText('not-a-date'), '')
