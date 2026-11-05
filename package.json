@@ -1,6 +1,6 @@
 {
   "name": "dsh-usage-quota",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "DeepSeek Harness plugin: Codex-style reasoning effort control and provider-aware usage/quota display in the composer dock.",
   "license": "MIT",
   "type": "module",

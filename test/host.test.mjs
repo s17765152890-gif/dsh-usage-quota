@@ -33,8 +33,11 @@ function mount(options = {}) {
     return { ok: status >= 200 && status < 300, status, json: async () => body }
   }
   let route
+  const services = options.services ?? {}
   const ctx = {
-    get: name => (name === 'credentials' ? { resolve: ref => Promise.resolve(KEYS[ref] ? { value: KEYS[ref], source: 'env' } : undefined) } : undefined),
+    get: name => (name === 'credentials'
+      ? { resolve: ref => Promise.resolve(KEYS[ref] ? { value: KEYS[ref], source: 'env' } : undefined) }
+      : services[name]),
     connection: { requestRejection: () => undefined },
     webServer: { register: value => { route = value; return () => {} } },
     effect: fn => { fn() },
@@ -74,9 +77,10 @@ test('config normalization rejects unsafe or incomplete provider entries', () =>
 
 test('unknown providers are unsupported so the client stays silent', () => {
   const providers = normalizeConfig({}).providers
-  assert.equal(resolveProvider(providers, 'deepseek-account'), undefined)
+  assert.equal(resolveProvider(providers, 'some-other-gateway'), undefined)
   assert.equal(resolveProvider(providers, ''), undefined)
   assert.equal(resolveProvider(providers, 'opencode-go').kind, 'opencode-go')
+  assert.equal(resolveProvider(providers, 'deepseek-account').kind, 'deepseek-account')
 })
 
 test('opencode-go windows report remaining percentages and drop placeholder reset times', async () => {
@@ -142,7 +146,7 @@ test('a balance provider answers its own shape and unsupported providers answer 
     assert.equal(balance.payload.today.requests, 3)
     assert.equal(harness.calls[0].headers.authorization, 'Bearer test-relay-key')
 
-    const unsupported = await harness.call('/x-usage?provider=deepseek-account')
+    const unsupported = await harness.call('/x-usage?provider=some-other-gateway')
     assert.equal(unsupported.payload.ok, false)
     assert.equal(unsupported.payload.reason, 'unsupported')
   } finally { harness.restore() }
@@ -170,4 +174,67 @@ test('refresh interval persists in the Harness home, not in the package', async 
     const bad = await harness.call('/x-usage', 'POST', { refreshSeconds: 'later' })
     assert.equal(bad.status, 400)
   } finally { harness.restore() }
+})
+
+test('the official account adapter is service-backed and needs no endpoint or key', () => {
+  const providers = normalizeConfig({}).providers
+  assert.equal(providers['deepseek-account'].kind, 'deepseek-account')
+  assert.equal(providers['deepseek-account'].serviceBacked, true)
+  assert.equal(providers['deepseek-account'].endpoint, undefined)
+  assert.equal(providers['deepseek-account'].apiKeyRef, undefined)
+  assert.throws(
+    () => normalizeConfig({ providers: { 'deepseek-account': { kind: 'deepseek-account', endpoint: 'https://x.test' } } }),
+    /service-backed/,
+  )
+})
+
+test('the official account wallets come from the account service, never from an HTTP key', async () => {
+  const calls = []
+  const account = {
+    getState: async () => ({ status: 'credential-stored' }),
+    getBalance: async client => {
+      calls.push(client)
+      return {
+        status: 'ready',
+        value: [{ currency: 'CNY', balance: '128.40' }],
+        bonusWallets: [{ currency: 'CNY', balance: '5.00' }],
+      }
+    },
+  }
+  const harness = mount({ services: { deepseekAccount: account } })
+  try {
+    const { payload } = await harness.call('/x-usage?provider=deepseek-account')
+    assert.equal(payload.ok, true)
+    assert.equal(payload.kind, 'balance')
+    assert.deepEqual(payload.wallets.map(wallet => [wallet.label, wallet.symbol, wallet.amount]), [['充值余额', '¥', 128.4], ['赠金余额', '¥', 5]])
+    assert.equal(harness.calls.length, 0, 'the account adapter performs no direct upstream request')
+    assert.equal(calls.length, 1)
+    assert.equal(typeof calls[0].timezoneOffsetSeconds, 'number')
+  } finally { harness.restore() }
+})
+
+test('a signed-out or failing official account fails soft', async () => {
+  const signedOut = mount({ services: { deepseekAccount: { getState: async () => ({ status: 'signed-out' }) } } })
+  try {
+    const { payload } = await signedOut.call('/x-usage?provider=deepseek-account')
+    assert.equal(payload.ok, false)
+    assert.equal(payload.reason, 'signed-out')
+  } finally { signedOut.restore() }
+
+  const failing = mount({
+    services: {
+      deepseekAccount: { getState: async () => ({ status: 'credential-stored' }), getBalance: async () => ({ status: 'failed' }) },
+    },
+  })
+  try {
+    const { payload } = await failing.call('/x-usage?provider=deepseek-account')
+    assert.equal(payload.reason, 'http')
+  } finally { failing.restore() }
+
+  const missing = mount({})
+  try {
+    const { payload } = await missing.call('/x-usage?provider=deepseek-account')
+    assert.equal(payload.ok, false)
+    assert.equal(payload.reason, 'no-adapter')
+  } finally { missing.restore() }
 })
